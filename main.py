@@ -1,6 +1,9 @@
 import sys
+from os import listdir
+from os.path import isfile, join
 import pygame
 import numpy as np
+
 from elements import Ball, Queue
 
 
@@ -25,20 +28,19 @@ def start():
     clock = pygame.time.Clock()
 
     # create balls
-    w_ball = Ball(screen, white, [200, 400], 20)
-    y_ball = Ball(screen, yellow, [600, 400], 20)
-    r_ball = Ball(screen, red, [640, 422], 20)
-    b_ball = Ball(screen, blue, [640, 378], 20)
-    b1_ball = Ball(screen, blue, [680, 400], 20)
-    b2_ball = Ball(screen, blue, [680, 442], 20)
-    b3_ball = Ball(screen, blue, [680, 358], 20)
+    ball_folder = "rsc/balls/"
+    ball_list = []
+    i = 0
+    for f in listdir(ball_folder):
+        i += 1
+        ball_list.append(Ball(f, screen, [i*100, 440], join(ball_folder, f)))
 
-    ball_list = [w_ball, y_ball, r_ball, b_ball, b1_ball, b2_ball, b3_ball]
+
     collision_combination = jederMitJedem(ball_list)
 
-    #y_ball.move([-1., 0])
+    white_ball = [ball for ball in ball_list if ball.id == "0.png"][0]
 
-    q = Queue(screen, w_ball.pos)
+    # q = Queue(screen, white_ball.pos)
     
     while True:
         #print('frame begins')
@@ -52,21 +54,21 @@ def start():
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    w_ball.move([-vel, 0])
+                    white_ball.move([-vel, 0])
                 if event.key == pygame.K_RIGHT:
-                    w_ball.move([vel, 0])
+                    white_ball.move([vel, 0])
                 if event.key == pygame.K_UP:
-                    w_ball.move([0, -vel])
+                    white_ball.move([0, -vel])
                 if event.key == pygame.K_DOWN:
-                    w_ball.move([0, vel])
+                    white_ball.move([0, vel])
 
         
 
         # updates
         elapsed_time = clock.tick()
 
-        q.update(w_ball.pos)
-        q.draw()
+        #q.update(white_ball.pos)
+        #q.draw()
 
         for ball in ball_list:
             ball.update(elapsed_time)

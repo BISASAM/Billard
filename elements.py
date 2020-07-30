@@ -5,14 +5,16 @@ import math
 
 class Ball:
 
-    def __init__(self, screen, color, pos, radius):
+    radius = 20  # class variable
+
+    def __init__(self, id, screen, pos, txt):
+        self.id = id
         self.screen = screen
-        self.color = color
         self.pos = np.array(pos)
-        self.radius = radius
         self.v = np.zeros(2)
         self.r = np.zeros(2)
         self.holed = False
+        self.image = pygame.transform.scale(pygame.image.load(txt), (40,40))
 
     def events(self):
         pass
@@ -28,7 +30,8 @@ class Ball:
 
     def draw(self):
         if not self.holed:
-            pygame.draw.circle(self.screen, self.color, self.pos.astype(int), self.radius)
+            new_pos = np.array([self.pos[0]-Ball.radius, self.pos[1]-Ball.radius]).astype(int)  # origin_shift to center of ball
+            self.screen.blit(self.image, new_pos)
 
     def move(self, velocity):
         self.v = np.array(velocity)
