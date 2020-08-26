@@ -16,15 +16,25 @@ class Ball:
         self.holed = False
         self.image = pygame.transform.scale(pygame.image.load(txt), (40,40))
 
+    def __str__(self):
+        return f"Ball {self.id} @ {self.pos}"
+        
+    def __repr__(self):
+        return f"Ball {self.id} @ {self.pos}"
+    
     def events(self):
         pass
 
     def update(self, elapsed_time):
         if np.linalg.norm(self.v) > 0.01:
-            self.pos = self.pos + self.v * elapsed_time
-            self.pos = np.mod(self.pos, [self.screen.get_width(), self.screen.get_height()]) 
+            for ms in range(0, elapsed_time):
+                self.pos = self.pos + self.v
+                self.v *= 0.9985
+                self.pos = np.mod(self.pos, [self.screen.get_width(), self.screen.get_height()])
+            # self.pos = self.pos + self.v * elapsed_time
+            # self.pos = np.mod(self.pos, [self.screen.get_width(), self.screen.get_height()]) 
             # self.v = self.v - self.v / np.linalg.norm(self.v) * 0.0003 * elapsed_time  # linear decreasing of v
-            self.v *= math.pow(0.9985, elapsed_time)  # exponential decreasing of v
+            # self.v *= math.pow(0.9985, elapsed_time)  # exponential decreasing of v
         else:
             self.v = np.zeros(2)
 
