@@ -8,7 +8,7 @@ class SceneBase:
     def Update(self, elapsed_time):
         print("needs to be overwritten")
 
-    def Render(self, screen):
+    def Render(self):
         print("needs to be overwritten")
 
     def SwitchToScene(self, next_scene):

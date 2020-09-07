@@ -17,6 +17,6 @@ class TitleScene(SceneBase):
     def Update(self, elapsed_time):
         pass
     
-    def Render(self, screen):
+    def Render(self):
         # For the sake of brevity, the title scene is a blank red screen
-        screen.fill((255, 0, 0))
+        self.screen.fill((255, 0, 0))
