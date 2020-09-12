@@ -5,7 +5,7 @@ from os import listdir
 from os.path import isfile, join
 import numpy as np
 from tools import Tools
-from elements import Ball, Queue, Hole
+from elements import Ball, Queue, Hole, Power
 
 
 black = (0, 0, 0)
@@ -27,8 +27,13 @@ class GameScene(SceneBase):
         b_thickness = 40
         hole_radius = 40
         width, height = self.screen.get_size()
-        self.hole_koord = [(b_thickness, b_thickness), (width//2, b_thickness), (width-b_thickness, b_thickness),
-                           (b_thickness, height-b_thickness), (width//2, height-b_thickness), (width-b_thickness, height-b_thickness)]
+        self.hole_koord = [
+            (b_thickness, b_thickness),
+            (width // 2, b_thickness),
+            (width - b_thickness, b_thickness),
+            (b_thickness, height - b_thickness),
+            (width // 2, height - b_thickness),
+            (width - b_thickness, height - b_thickness)]
 
         # create holes and balls
         self.hole_list = Tools.create_holes(self.screen)
@@ -39,15 +44,25 @@ class GameScene(SceneBase):
         # create Queue
         self.Q = Queue(self.screen)
 
-    def ProcessInput(self, events, pressed_keys):
+        # powerscale
+        self.power = Power(max_power=5)
+
+    def ProcessInput(self, events, pressed_keys, elapsed_time):
         if not self.white_ball.is_moving:
+            if pressed_keys[pygame.K_RIGHT]:
+                self.Q.rotate(3, elapsed_time)
+            if pressed_keys[pygame.K_LEFT]:
+                self.Q.rotate(-3, elapsed_time)
+            if pressed_keys[pygame.K_UP]:
+                self.Q.rotate(-0.3, elapsed_time)
+            if pressed_keys[pygame.K_DOWN]:
+                self.Q.rotate(0.3, elapsed_time)
+            if pressed_keys[pygame.K_SPACE]:
+                self.power.load(0.01)
             for event in events:
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                    self.white_ball.move(self.Q.get_r()*vel)
-            if pressed_keys[pygame.K_a]:
-                    self.Q.rotate(clockwise=False)
-            if pressed_keys[pygame.K_s]:
-                    self.Q.rotate(clockwise=True)
+                if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
+                    p = self.power.get()
+                    self.white_ball.move(self.Q.get_r() * p)
 
     def Update(self, elapsed_time):
 
@@ -55,7 +70,7 @@ class GameScene(SceneBase):
             ball.update(elapsed_time)
 
         for combi in self.collision_combination:
-            ball_to_ball_collision(*combi)
+            Ball.ball_to_ball_collision(*combi)
 
         for ball in self.ball_list:
             ball_to_border_collision(*self.screen.get_size(), ball)
@@ -74,7 +89,8 @@ class GameScene(SceneBase):
 
         if not self.white_ball.is_moving:
             self.Q.draw(self.white_ball.pos)
-        
+
+        self.power.draw(self.screen, self.white_ball.pos)
 
         arrow(self.screen, (26, 54))
         arrow(self.screen, (54, 26))
@@ -96,6 +112,13 @@ class GameScene(SceneBase):
         arrow(self.screen, (1597, 826))
         arrow(self.screen, (1626, 798))
 
+        width, height = self.screen.get_size()
+        #arrow(self.screen, (40, 96))
+        #arrow(self.screen, (width - 40, height - 96))
+        #arrow(self.screen, (96, 40))
+        #arrow(self.screen, (width - 96, height - 40))
+        # arrow(self.screen, (1626, 798))
+
 
 def arrow(screen, pos):
     arrow = [(0, 0), (20, 0), (20, 10)]
@@ -106,14 +129,9 @@ def arrow(screen, pos):
 def ball_to_border_collision(width, height, b):
 
     if not b.holed:
-        rect1 = (40 < b.pos[0] < width - 40) and (117 <
-                                                  b.pos[1] < height - 117)
-        rect2 = (117 < b.pos[0] < width -
-                 117) and (40 < b.pos[1] < height - 40)
-        allowed_area = rect1 or rect2
 
-        if allowed_area:
-            # check x axis
+        # collision with left and right border
+        if 82 < b.pos[1] < height - 82:
             if b.pos[0] < 60 or b.pos[0] > width - 60:
                 # reset position
                 b.pos[0] = 60 if b.pos[0] < 60 else width - 60
@@ -121,43 +139,14 @@ def ball_to_border_collision(width, height, b):
                 v_new = np.array([-b.v[0], b.v[1]])
                 b.move(v_new)
 
-            # check y axis
+        # collision with upper and lower border
+        if 82 < b.pos[0] < width - 82:
             if b.pos[1] < 60 or b.pos[1] > height - 60:
                 # reset position
                 b.pos[1] = 60 if b.pos[1] < 60 else height - 60
 
                 v_new = np.array([b.v[0], -b.v[1]])
                 b.move(v_new)
-
-
-def ball_to_ball_collision(b1, b2):
-
-    if not b1.holed and not b2.holed:
-        if np.linalg.norm(b1.pos - b2.pos) < 40:
-
-            normale = (b2.pos - b1.pos)/np.linalg.norm(b1.pos - b2.pos)
-            tangente = np.array([normale[1], -normale[0]])
-
-            while np.linalg.norm(b1.pos - b2.pos) < 40:  # reset ball position
-                b1.pos = b1.pos - normale  # -= doesn't work in all cases here
-
-            A = np.vstack((normale, tangente)).T
-
-            # split v1 into v1_n & v1_t
-            parameter = np.linalg.solve(A, b1.v)
-            v1_n = normale * parameter[0]
-            v1_t = tangente * parameter[1]
-
-            # split v2 into v2_n & v2_t
-            parameter = np.linalg.solve(A, b2.v)
-            v2_n = normale * parameter[0]
-            v2_t = tangente * parameter[1]
-
-            v1_new = v2_n + v1_t
-            v2_new = v1_n + v2_t
-
-            b1.move(v1_new)
-            b2.move(v2_new)
 
 
 def ball_to_hole_collision(b, hole_koord):

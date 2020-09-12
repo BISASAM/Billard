@@ -59,6 +59,47 @@ class Ball:
         self.is_moving = True
         self.v = np.array(velocity)
 
+    # getter to easily adress x and y koordinate
+    def get_x(self):
+        print("Getting x")
+        return self.pos[0]
+
+    def get_y(self):
+        print("Getting y")
+        return self.pos[1]
+    
+    x = property(get_x)
+    y = property(get_y)
+
+    @staticmethod
+    def ball_to_ball_collision(b1, b2):
+
+        if not b1.holed and not b2.holed:
+            if np.linalg.norm(b1.pos - b2.pos) < 40:
+
+                normale = (b2.pos - b1.pos)/np.linalg.norm(b1.pos - b2.pos)
+                tangente = np.array([normale[1], -normale[0]])
+
+                while np.linalg.norm(b1.pos - b2.pos) < 40:  # reset ball position
+                    b1.pos = b1.pos - normale  # -= doesn't work in all cases here
+
+                A = np.vstack((normale, tangente)).T
+
+                # split v1 into v1_n & v1_t
+                parameter = np.linalg.solve(A, b1.v)
+                v1_n = normale * parameter[0]
+                v1_t = tangente * parameter[1]
+
+                # split v2 into v2_n & v2_t
+                parameter = np.linalg.solve(A, b2.v)
+                v2_n = normale * parameter[0]
+                v2_t = tangente * parameter[1]
+
+                v1_new = v2_n + v1_t
+                v2_new = v1_n + v2_t
+
+                b1.move(v1_new)
+                b2.move(v2_new)
 
 
 class Hole:
@@ -125,8 +166,7 @@ class Hole:
         pygame.draw.circle(self.screen, black, self.pos, self.radius)
 
         if self.typ == "ul":  # upper left
-            pygame.draw.polygon(self.screen, black, [
-                                (12, 68), (40, 40), (68, 12), (96, 40), (40, 96)])
+            pygame.draw.polygon(self.screen, black, [(12, 68), (40, 40), (68, 12), (96, 40), (40, 96)])
         elif self.typ == "ur":  # upper right
             ur = [(12, 12), (40, 40), (68, 68), (40, 96), (-16, 40)]
             ur = [(point[0] + 1600, point[1]) for point in ur]
@@ -184,12 +224,14 @@ class Queue:
     def __init__(self, screen):
         self.screen = screen
 
-        self.edges = [np.array((20, 30)), np.array((20, 40)), np.array((400, 38)), np.array((400, 32))]
-        self.pivot = np.array([425, 35])
+        #self.edges = [np.array((20, 30)), np.array((20, 40)), np.array((400, 38)), np.array((400, 32))]
+        self.edges = [np.array((30, 32)), np.array((30, 38)), np.array((150, 38)), np.array((150, 32))]
+        self.pivot = np.array([0, 35])
 
-        theda = np.radians(1)
-        self.Right = np.array(((np.cos(theda), -np.sin(theda)), (np.sin(theda), np.cos(theda))))
-        self.Left = np.array(((np.cos(-theda), -np.sin(-theda)), (np.sin(-theda), np.cos(-theda))))
+        # Rotation matrix, initial values
+        self.theda = 15
+        scale = self.theda / 1000
+        self.rot = np.array(((np.cos(scale), -np.sin(scale)), (np.sin(scale), np.cos(scale))))
 
     def update(self, pos):
         pass
@@ -198,19 +240,53 @@ class Queue:
         translation = self.edges + ball_pos - self.pivot
         pygame.draw.polygon(self.screen, white, translation)
 
-    def rotate(self, clockwise=True):
+    def rotate(self, rot_speed, elapsed_time):
+        if rot_speed != self.theda:
+            self.update_rot_mat(rot_speed)
 
-        self.edges = self.edges - self.pivot
-        new_edges = []
-        for point in self.edges:
-            if clockwise:
-                new_edges.append(np.dot(self.Right, point))
-            else:
-                new_edges.append(np.dot(self.Left, point))
-        self.edges = new_edges + self.pivot
+        for ms in range(0, elapsed_time):  # for equal speed on diff. machines
+            self.edges = self.edges - self.pivot
+            new_edges = []
+            for point in self.edges:
+                new_edges.append(np.dot(self.rot, point))
+            self.edges = new_edges + self.pivot
 
     def get_r(self):
         r = self.edges[2] - self.edges[0]
         return r / np.linalg.norm(r)
+    
+    def update_rot_mat(self, rot_speed):
+        self.theda = rot_speed
+        scale = self.theda / 1000
+        self.rot = np.array(((np.cos(scale), -np.sin(scale)), (np.sin(scale), np.cos(scale))))
 
 
+class Power:
+
+    def __init__(self, max_power):
+        self.power = 0
+        self.max_power = max_power
+        self.active = False
+
+    def load(self, amount):
+        if not self.active: 
+            self.active = True
+        self.power += amount
+        self.power = min(self.power, self.max_power)
+
+    def get(self):
+        power = self.power
+        self.reset()
+        return power
+
+    def reset(self):
+        self.active = False
+        self.power = 0
+
+    def draw(self, screen, ball_pos):
+        if self.active:
+            color = (self.power/self.max_power * 255, 0, (1-self.power/self.max_power) * 255)
+            pos = np.array([10, -40]) + ball_pos
+            width = (self.power * 30, 10)
+            pygame.draw.rect(screen, black, [*pos, self.max_power*30, 10], 2)
+            pygame.draw.rect(screen, color, [*pos, *width])

@@ -31,7 +31,7 @@ def run_game(width, height, fps, starting_scene):
             else:
                 filtered_events.append(event)
 
-        active_scene.ProcessInput(filtered_events, pressed_keys)
+        active_scene.ProcessInput(filtered_events, pressed_keys, elapsed_time)
         active_scene.Update(elapsed_time)
         active_scene.Render()
 
