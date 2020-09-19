@@ -67,17 +67,14 @@ class GameScene(SceneBase):
     def Update(self, elapsed_time):
 
         for ball in self.ball_list:
-            ball.update(elapsed_time)
+            if not ball.holed:
+                ball.update(elapsed_time)
+                Ball.ball_to_border_collision(*self.screen.get_size(), ball)
+                for hole in self.hole_list:
+                    hole.collision(ball)
 
         for combi in self.collision_combination:
             Ball.ball_to_ball_collision(*combi)
-
-        for ball in self.ball_list:
-            ball_to_border_collision(*self.screen.get_size(), ball)
-
-        for ball in self.ball_list:
-            for hole in self.hole_list:
-                hole.collision(ball)
 
     def Render(self):
         self.screen.fill(green)
@@ -87,71 +84,12 @@ class GameScene(SceneBase):
         for ball in self.ball_list:
             ball.draw()
 
-        if not self.white_ball.is_moving:
+        if not self.white_ball.is_moving and not self.white_ball.holed:
             self.Q.draw(self.white_ball.pos)
 
         self.power.draw(self.screen, self.white_ball.pos)
-
-        arrow(self.screen, (26, 54))
-        arrow(self.screen, (54, 26))
-        arrow(self.screen, (54, 82))
-        arrow(self.screen, (82, 54))
-
-        arrow(self.screen, (1654, 54))
-        arrow(self.screen, (1626, 26))
-        arrow(self.screen, (1626, 82))
-        arrow(self.screen, (1597, 54))
-
-        arrow(self.screen,  (54, 854))
-        arrow(self.screen, (26, 826))
-        arrow(self.screen, (82, 826))
-        arrow(self.screen, (54, 798))
-
-        arrow(self.screen, (1626, 854))
-        arrow(self.screen, (1654, 826))
-        arrow(self.screen, (1597, 826))
-        arrow(self.screen, (1626, 798))
-
-        width, height = self.screen.get_size()
-        #arrow(self.screen, (40, 96))
-        #arrow(self.screen, (width - 40, height - 96))
-        #arrow(self.screen, (96, 40))
-        #arrow(self.screen, (width - 96, height - 40))
-        # arrow(self.screen, (1626, 798))
-
 
 def arrow(screen, pos):
     arrow = [(0, 0), (20, 0), (20, 10)]
     arrow = [(point[0]+pos[0], point[1]+pos[1]) for point in arrow]
     pygame.draw.polygon(screen, red, arrow)
-
-
-def ball_to_border_collision(width, height, b):
-
-    if not b.holed:
-
-        # collision with left and right border
-        if 82 < b.pos[1] < height - 82:
-            if b.pos[0] < 60 or b.pos[0] > width - 60:
-                # reset position
-                b.pos[0] = 60 if b.pos[0] < 60 else width - 60
-
-                v_new = np.array([-b.v[0], b.v[1]])
-                b.move(v_new)
-
-        # collision with upper and lower border
-        if 82 < b.pos[0] < width - 82:
-            if b.pos[1] < 60 or b.pos[1] > height - 60:
-                # reset position
-                b.pos[1] = 60 if b.pos[1] < 60 else height - 60
-
-                v_new = np.array([b.v[0], -b.v[1]])
-                b.move(v_new)
-
-
-def ball_to_hole_collision(b, hole_koord):
-    if not b.holed:
-        for koord in hole_koord:
-            if np.linalg.norm(b.pos - np.array(koord)) < 30:
-                b.holed = True
-                break

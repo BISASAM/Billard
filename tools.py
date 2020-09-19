@@ -89,3 +89,12 @@ class Tools:
             for i in range(start, len(liste)):
                 result.append((entry, liste[i]))
         return result
+
+
+if __name__ == "__main__":
+    # tests
+    A = (5,3)
+    B = (2,1)
+
+
+

@@ -11,6 +11,7 @@ blue = (0, 0, 255)
 white = (255, 255, 255)
 brown = (102, 64, 0)
 green = (0, 153, 0)
+grey = (100, 100, 100)
 
 
 class Ball:
@@ -42,8 +43,7 @@ class Ball:
             for ms in range(0, elapsed_time):
                 self.pos = self.pos + self.v
                 self.v *= 0.9985
-                self.pos = np.mod(
-                    self.pos, [self.screen.get_width(), self.screen.get_height()])
+                self.pos = np.mod(self.pos, [self.screen.get_width(), self.screen.get_height()])
         else:
             self.v = np.zeros(2)
             self.is_moving = False
@@ -54,6 +54,14 @@ class Ball:
             new_pos = np.array(
                 [self.pos[0]-Ball.radius, self.pos[1]-Ball.radius]).astype(int)
             self.screen.blit(self.image, new_pos)
+            self.screen.set_at((int(self.x), int(self.y)), red)
+
+            # red collision lines
+            width, height = self.screen.get_size()
+            pygame.draw.line(self.screen, red, (60, 88), (60, height - 88), 2)
+            pygame.draw.line(self.screen, red, (width - 60, 88), (width - 60, height - 88), 2)
+            pygame.draw.line(self.screen, red, (88, 60), (width - 88, 60), 2)
+            pygame.draw.line(self.screen, red, (88, height - 60), (width - 88, height - 60), 2)
 
     def move(self, velocity):
         self.is_moving = True
@@ -61,15 +69,20 @@ class Ball:
 
     # getter to easily adress x and y koordinate
     def get_x(self):
-        print("Getting x")
         return self.pos[0]
+    
+    def set_x(self, value):
+        self.pos[0] = value % self.screen.get_width()
 
+    # setter to set single axis koordinates
     def get_y(self):
-        print("Getting y")
         return self.pos[1]
     
-    x = property(get_x)
-    y = property(get_y)
+    def set_y(self, value):
+        self.pos[1] = value % self.screen.get_height()
+    
+    x = property(get_x, set_x)
+    y = property(get_y, set_y)
 
     @staticmethod
     def ball_to_ball_collision(b1, b2):
@@ -101,6 +114,28 @@ class Ball:
                 b1.move(v1_new)
                 b2.move(v2_new)
 
+    @staticmethod
+    def ball_to_border_collision(width, height, b):
+        if not b.holed:
+
+            # collision with left and right border
+            if 88 < b.y < height - 88:
+                if b.x < 60 or b.x > width - 60:
+                    # reset position
+                    b.x = 60 if b.x < 60 else width - 60
+
+                    v_new = np.array([-b.v[0], b.v[1]])
+                    b.move(v_new)
+
+            # collision with upper and lower border
+            if 88 < b.x < width - 88:
+                if b.y < 60 or b.y > height - 60:
+                    # reset position
+                    b.y = 60 if b.y < 60 else height - 60
+
+                    v_new = np.array([b.v[0], -b.v[1]])
+                    b.move(v_new)
+
 
 class Hole:
 
@@ -121,46 +156,73 @@ class Hole:
         self.radius = radius
         self.typ = typ
 
-        # props for ball to hole collisions, AC -> lower line, BD -> upper line
-        A, B, C, D = (0, 0), (0, 0), (1, 0), (1, 0)
+        # props for ball to hole collisions, AB -> upper line, CD -> lower line
+        A, B, C, D = (0, 0), (1, 0), (0, 0), (1, 0)
         if typ == "ul":
-            A = (26, 54)
-            B = (54, 26)
-            C = (54, 82)
-            D = (82, 54)
+            A = (54, 26)
+            B = (88, 60)
+            C = (26, 54)
+            D = (60, 88)
+            self.goal_line = Line(A,C)
 
         elif typ == "ur":
-            A = (1654, 54)
+            A = (1591, 60)
             B = (1626, 26)
-            C = (1626, 82)
-            D = (1597, 54)
+            C = (1620, 88)
+            D = (1654, 54)
+            self.goal_line = Line(B,D)
 
         elif typ == "ll":
-            A = (54, 854)
-            B = (26, 826)
-            C = (82, 826)
-            D = (54, 798)
+            A = (25, 826)
+            B = (60, 791)
+            C = (54, 854)
+            D = (88, 820)
+            self.goal_line = Line(A,C)
 
         elif typ == "lr":
-            A = (1626, 854)
+            A = (1620, 791)
             B = (1654, 826)
-            C = (1597, 826)
-            D = (1626, 798)
+            C = (1591, 820)
+            D = (1626, 854)
+            self.goal_line = Line(B,D)
 
         # lines defining hole entry
-        self.lower_line = Line(A, C)
-        self.upper_line = Line(B, D)
+        self.upper_line = Line(A, B)
+        self.lower_line = Line(C, D)
+        
 
     def collision(self, ball):
 
         if self.typ not in ["um", "lm"] and not ball.holed:
             if self.lower_line.is_below_line(ball.pos) or self.upper_line.is_above_line(ball.pos):
                 # reset position
-                while self.lower_line.is_below_line(ball.pos) or self.upper_line.is_above_line(ball.pos):
-                    ball.pos = ball.pos - ball.v
+                #while self.lower_line.is_below_line(ball.pos) or self.upper_line.is_above_line(ball.pos):
+                #    ball.pos = ball.pos - ball.v
 
-                v_new = np.array([ball.v[1], ball.v[0]])
+                #print("upper is above:", self.upper_line.is_above_line(ball.pos))
+                #print("lower is below:", self.lower_line.is_below_line(ball.pos))
+
+                P = np.array(self.upper_line.P)
+                Q = np.array(self.upper_line.Q)
+
+                tangente = (P - Q)/np.linalg.norm(P - Q)
+                normale = np.array([tangente[1], -tangente[0]])
+
+                A = np.vstack((normale, tangente)).T
+
+                # split v into v_n & v_t
+                parameter = np.linalg.solve(A, ball.v)
+                v_n = normale * parameter[0]
+                v_t = tangente * parameter[1]
+
+                v_new = -v_n + v_t
+
                 ball.move(v_new)
+            
+            con1 = self.typ in ["ul", "ur"] and self.goal_line.is_above_line(ball.pos)
+            con2 = self.typ in ["ll", "lr"] and self.goal_line.is_below_line(ball.pos)
+            if con1 or con2:
+                ball.holed = True
 
     def draw(self):
         pygame.draw.circle(self.screen, black, self.pos, self.radius)
@@ -179,6 +241,9 @@ class Hole:
             lr = [(12, 68), (40, 40), (68, 12), (40, -16), (-16, 40)]
             lr = [(point[0] + 1600, point[1] + 800) for point in lr]
             pygame.draw.polygon(self.screen, black, lr)
+        
+        self.upper_line.draw(self.screen)
+        self.lower_line.draw(self.screen)
 
 
 class Line:
@@ -189,43 +254,39 @@ class Line:
         self.Q = Q
         self.f_x = Line.compute_line(P, Q)
 
+    @staticmethod
     def compute_line(P, Q):
         a = np.array([[P[0], 1], [Q[0], 1]])
         b = np.array([P[1], Q[1]])
         slope, c = np.linalg.solve(a, b)
-        def f(x): return slope*x + c
+        f = lambda x: slope*x + c
         return f
 
     def is_above_line(self, point):
-        in_x_area = min(self.P[0], self.Q[0]) < point[0] < max(
-            self.P[0], self.Q[0])
-        in_y_area = min(self.P[1], self.Q[1]) < point[1] < max(
-            self.P[1], self.Q[1])
+        in_x_area = min(self.P[0], self.Q[0]) < point[0] < max(self.P[0], self.Q[0])
+        in_y_area = min(self.P[1], self.Q[1]) < point[1] < max(self.P[1], self.Q[1])
         if in_x_area and in_y_area:
-            return point[1] > self.f_x(point[0])
+            return point[1] < self.f_x(point[0])  # sign reverted because Y starts in upper left corner
         else:
             return False
 
     def is_below_line(self, point):
-        in_x_area = min(self.P[0], self.Q[0]) < point[0] < max(
-            self.P[0], self.Q[0])
-        in_y_area = min(self.P[1], self.Q[1]) < point[1] < max(
-            self.P[1], self.Q[1])
+        in_x_area = min(self.P[0], self.Q[0]) < point[0] < max(self.P[0], self.Q[0])
+        in_y_area = min(self.P[1], self.Q[1]) < point[1] < max(self.P[1], self.Q[1])
         if in_x_area and in_y_area:
-            return point[1] < self.f_x(point[0])
+            return point[1] > self.f_x(point[0])  # sign reverted because Y starts in upper left corner
         else:
             return False
+    def draw(self, screen):
+        pygame.draw.line(screen, red, self.P, self.Q, 2)
 
 
 class Queue:
 
-    white = (255, 255, 255)
-
     def __init__(self, screen):
         self.screen = screen
 
-        #self.edges = [np.array((20, 30)), np.array((20, 40)), np.array((400, 38)), np.array((400, 32))]
-        self.edges = [np.array((30, 32)), np.array((30, 38)), np.array((150, 38)), np.array((150, 32))]
+        self.edges = [np.array((30, 31)), np.array((30, 39)), np.array((200, 36)), np.array((200, 34))]
         self.pivot = np.array([0, 35])
 
         # Rotation matrix, initial values
@@ -238,7 +299,7 @@ class Queue:
 
     def draw(self, ball_pos):
         translation = self.edges + ball_pos - self.pivot
-        pygame.draw.polygon(self.screen, white, translation)
+        pygame.draw.polygon(self.screen, grey, translation)
 
     def rotate(self, rot_speed, elapsed_time):
         if rot_speed != self.theda:
