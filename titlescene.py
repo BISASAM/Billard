@@ -31,14 +31,14 @@ class TitleScene(SceneBase):
     
     def Render(self):
         # For the sake of brevity, the title scene is a blank red screen
-        mid, heigt, step = 650, 150, 80
+        mid, height, step = 650, 150, 80
         
         self.screen.fill(black)
 
-        self.text.render_to(self.screen, (mid - 200, heigt), "Willkommen Daheim Mr. O’Sullivan", white)  # eig ein Snooker Spieler, aber der einzige den ich kenne
-        self.text_small.render_to(self.screen, (mid, heigt + step * 2), "⬅  ➡    Zielen", white)
-        self.text_small.render_to(self.screen, (mid, heigt + step * 3), "⬆  ⬇    genaues Zielen", white)
-        self.text_small.render_to(self.screen, (mid, heigt + step * 4), "SPACE     Laden und Schießen", white)
-        self.text_small.render_to(self.screen, (mid, heigt + step * 6), "ENTER     Spiel starten", white)
-        self.text_small.render_to(self.screen, (mid, heigt + step * 7), "ESC          Spiel beenden", white)
+        self.text.render_to(self.screen, (mid - 200, height), "Willkommen Daheim Mr. O’Sullivan", white)  # eig ein Snooker Spieler, aber der einzige den ich kenne
+        self.text_small.render_to(self.screen, (mid, height + step * 2), "⬅  ➡    Zielen", white)
+        self.text_small.render_to(self.screen, (mid, height + step * 3), "⬆  ⬇    genaues Zielen", white)
+        self.text_small.render_to(self.screen, (mid, height + step * 4), "SPACE     Laden und Schießen", white)
+        self.text_small.render_to(self.screen, (mid, height + step * 6), "ENTER     Spiel starten", white)
+        self.text_small.render_to(self.screen, (mid, height + step * 7), "ESC          Spiel beenden", white)
     
