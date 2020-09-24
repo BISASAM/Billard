@@ -20,14 +20,14 @@ vel = 0.5
 
 
 class GameScene(SceneBase):
-    def __init__(self, screen):
+    def __init__(self, screen, game_mode):
         SceneBase.__init__(self)
         self.screen = screen
 
 
         # create holes and balls
         self.hole_list = Tools.create_holes(self.screen)
-        self.ball_list = Tools.create_balls(self.screen, "9ball")
+        self.ball_list = Tools.create_balls(self.screen, game_mode)
         self.white_ball = [ball for ball in self.ball_list if ball.id == 0][0]
         self.collision_combination = Tools.jederMitJedem(self.ball_list)
 

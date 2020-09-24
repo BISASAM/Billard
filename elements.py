@@ -21,7 +21,7 @@ class Ball:
     def __init__(self, id, screen, pos, image_pth):
         self.id = id
         self.screen = screen
-        self.pos = np.array(pos)
+        self._pos = np.array(pos)  # needs to be float, dont convert to int!
         self.v = np.zeros(2)
         self.r = np.zeros(2)
         self.holed = False
@@ -74,9 +74,16 @@ class Ball:
     
     def set_y(self, value):
         self.pos[1] = value % self.screen.get_height()
+
+    def get_pos(self):
+        return self._pos
+    
+    def set_pos(self, koord):
+        self._pos = np.array(koord)
     
     x = property(get_x, set_x)
     y = property(get_y, set_y)
+    pos = property(get_pos, set_pos)
 
     @staticmethod
     def ball_to_ball_collision(b1, b2):

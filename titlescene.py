@@ -22,7 +22,9 @@ class TitleScene(SceneBase):
     def ProcessInput(self, events, pressed_keys, elapsed_time):
         for event in events:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                self.SwitchToScene(GameScene(self.screen))
+                self.SwitchToScene(GameScene(self.screen, "8ball"))
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
+                self.SwitchToScene(GameScene(self.screen, "9ball"))
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 self.Terminate()
     
@@ -39,6 +41,7 @@ class TitleScene(SceneBase):
         self.text_small.render_to(self.screen, (mid, height + step * 2), "⬅  ➡    Zielen", white)
         self.text_small.render_to(self.screen, (mid, height + step * 3), "⬆  ⬇    genaues Zielen", white)
         self.text_small.render_to(self.screen, (mid, height + step * 4), "SPACE     Laden und Schießen", white)
-        self.text_small.render_to(self.screen, (mid, height + step * 6), "ENTER     Spiel starten", white)
-        self.text_small.render_to(self.screen, (mid, height + step * 7), "ESC          Spiel beenden", white)
+        self.text_small.render_to(self.screen, (mid, height + step * 6), "ENTER     8-Ball starten", white)
+        self.text_small.render_to(self.screen, (mid, height + step * 7), "BACKSPACE     9-Ball starten", white)
+        self.text_small.render_to(self.screen, (mid, height + step * 8), "ESC          Spiel beenden", white)
     
