@@ -18,14 +18,14 @@ class Ball:
 
     radius = 20  # class variable
 
-    def __init__(self, id, screen, pos, txt):
+    def __init__(self, id, screen, pos, image_pth):
         self.id = id
         self.screen = screen
         self.pos = np.array(pos)
         self.v = np.zeros(2)
         self.r = np.zeros(2)
         self.holed = False
-        self.image = pygame.transform.scale(pygame.image.load(txt), (40, 40))
+        self.image = pygame.transform.scale(pygame.image.load(image_pth), (40, 40))
         self.is_moving = False
 
     def __str__(self):
@@ -50,31 +50,25 @@ class Ball:
 
     def draw(self):
         if not self.holed:
-            # origin_shift to center of ball
+            # pos shift to upper left corner to draw ball_image
             new_pos = np.array(
                 [self.pos[0]-Ball.radius, self.pos[1]-Ball.radius]).astype(int)
             self.screen.blit(self.image, new_pos)
-            self.screen.set_at((int(self.x), int(self.y)), red)
-
-            # red collision lines
-            width, height = self.screen.get_size()
-            pygame.draw.line(self.screen, red, (60, 88), (60, height - 88), 2)
-            pygame.draw.line(self.screen, red, (width - 60, 88), (width - 60, height - 88), 2)
-            pygame.draw.line(self.screen, red, (88, 60), (width - 88, 60), 2)
-            pygame.draw.line(self.screen, red, (88, height - 60), (width - 88, height - 60), 2)
 
     def move(self, velocity):
         self.is_moving = True
         self.v = np.array(velocity)
+    
+    def stop(self):
+        self.v = np.zeros(2) 
 
-    # getter to easily adress x and y koordinate
+    # getter, setter to easily adress x and y koordinate
     def get_x(self):
         return self.pos[0]
     
     def set_x(self, value):
         self.pos[0] = value % self.screen.get_width()
 
-    # setter to set single axis koordinates
     def get_y(self):
         return self.pos[1]
     
@@ -127,8 +121,8 @@ class Ball:
                     v_new = np.array([-b.v[0], b.v[1]])
                     b.move(v_new)
 
-            # collision with upper and lower border
-            if 88 < b.x < width - 88:
+            # collision with upper and lower border (leave out middle holes)
+            if 88 < b.x <= 820 or 860 <= b.x < width - 88:
                 if b.y < 60 or b.y > height - 60:
                     # reset position
                     b.y = 60 if b.y < 60 else height - 60
@@ -139,7 +133,7 @@ class Ball:
 
 class Hole:
 
-    def __init__(self, screen, pos, radius, typ):
+    def __init__(self, screen, pos, typ):
         """Summary or Description of the Function
 
             Parameters:
@@ -153,7 +147,7 @@ class Hole:
 
         self.screen = screen
         self.pos = np.array(pos)
-        self.radius = radius
+        self.radius = 40  # fix
         self.typ = typ
 
         # props for ball to hole collisions, AB -> upper line, CD -> lower line
@@ -163,13 +157,17 @@ class Hole:
             B = (88, 60)
             C = (26, 54)
             D = (60, 88)
+            self.polygon = [(12, 68), (40, 40), (68, 12), (96, 40), (40, 96)]
             self.goal_line = Line(A,C)
+
 
         elif typ == "ur":
             A = (1591, 60)
             B = (1626, 26)
             C = (1620, 88)
             D = (1654, 54)
+            self.polygon = [(12, 12), (40, 40), (68, 68), (40, 96), (-16, 40)]
+            self.polygon = [(point[0] + 1600, point[1]) for point in self.polygon] 
             self.goal_line = Line(B,D)
 
         elif typ == "ll":
@@ -177,6 +175,8 @@ class Hole:
             B = (60, 791)
             C = (54, 854)
             D = (88, 820)
+            self.polygon = [(12, 12), (40, 40), (68, 68), (96, 40), (40, -16)]
+            self.polygon = [(point[0], point[1] + 800) for point in self.polygon] 
             self.goal_line = Line(A,C)
 
         elif typ == "lr":
@@ -184,15 +184,25 @@ class Hole:
             B = (1654, 826)
             C = (1591, 820)
             D = (1626, 854)
+            self.polygon = [(12, 68), (40, 40), (68, 12), (40, -16), (-16, 40)]
+            self.polygon = [(point[0] + 1600, point[1] + 800) for point in self.polygon]
             self.goal_line = Line(B,D)
+
+        elif typ == "um":
+            self.polygon = [(805, 60), (70, 20)]
+            self.goal_line = ((800, 40), (880, 40))
+
+        elif typ == "lm":
+            self.polygon = [(805, 800), (70, 20)]
+            self.goal_line = ((800, 840), (880, 840))
 
         # lines defining hole entry
         self.upper_line = Line(A, B)
-        self.lower_line = Line(C, D)
-        
+        self.lower_line = Line(C, D)    
 
     def collision(self, ball):
 
+        # collision with diagonal line of corner holes
         if self.typ not in ["um", "lm"] and not ball.holed:
             if self.lower_line.is_below_line(ball.pos) or self.upper_line.is_above_line(ball.pos):
                 # reset position
@@ -219,31 +229,29 @@ class Hole:
 
                 ball.move(v_new)
             
-            con1 = self.typ in ["ul", "ur"] and self.goal_line.is_above_line(ball.pos)
-            con2 = self.typ in ["ll", "lr"] and self.goal_line.is_below_line(ball.pos)
+        # check if ball is "behind" goal line to mark it as holed
+        con1 = self.typ in ["ul", "ur"] and self.goal_line.is_above_line(ball.pos)
+        con2 = self.typ in ["ll", "lr"] and self.goal_line.is_below_line(ball.pos)
+        if con1 or con2:
+            ball.holed = True
+        
+        # check if ball is "behind" goal line to mark it as holed (for middle holes)
+        if self.typ in ["lm", "um"]:
+            in_area = self.goal_line[0][0] < ball.x < self.goal_line[1][0]  # lines are horizontal, so cant use "Line"-class here
+            con1 = self.typ in ["lm"] and in_area and ball.y > self.goal_line[1][1]
+            con2 = self.typ in ["um"] and in_area and ball.y < self.goal_line[1][1]
             if con1 or con2:
                 ball.holed = True
 
     def draw(self):
         pygame.draw.circle(self.screen, black, self.pos, self.radius)
-
-        if self.typ == "ul":  # upper left
-            pygame.draw.polygon(self.screen, black, [(12, 68), (40, 40), (68, 12), (96, 40), (40, 96)])
-        elif self.typ == "ur":  # upper right
-            ur = [(12, 12), (40, 40), (68, 68), (40, 96), (-16, 40)]
-            ur = [(point[0] + 1600, point[1]) for point in ur]
-            pygame.draw.polygon(self.screen, black, ur)
-        elif self.typ == "ll":  # lower left
-            ll = [(12, 12), (40, 40), (68, 68), (96, 40), (40, -16)]
-            ll = [(point[0], point[1] + 800) for point in ll]
-            pygame.draw.polygon(self.screen, black, ll)
-        elif self.typ == "lr":  # lower right
-            lr = [(12, 68), (40, 40), (68, 12), (40, -16), (-16, 40)]
-            lr = [(point[0] + 1600, point[1] + 800) for point in lr]
-            pygame.draw.polygon(self.screen, black, lr)
+        if self.typ in ["um", "lm"]:
+            pygame.draw.rect(self.screen, green, self.polygon)
+        else:
+            pygame.draw.polygon(self.screen, black, self.polygon)
         
-        self.upper_line.draw(self.screen)
-        self.lower_line.draw(self.screen)
+        # self.upper_line.draw(self.screen)  # red lines
+        # self.lower_line.draw(self.screen)
 
 
 class Line:
@@ -313,7 +321,7 @@ class Queue:
             self.edges = new_edges + self.pivot
 
     def get_r(self):
-        r = self.edges[2] - self.edges[0]
+        r = self.edges[3] - np.array([0, 34])
         return r / np.linalg.norm(r)
     
     def update_rot_mat(self, rot_speed):

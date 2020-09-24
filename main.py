@@ -41,4 +41,4 @@ def run_game(width, height, fps, starting_scene):
 
 
 if __name__ == "__main__":
-    run_game(1680, 880, 240, GameScene)
+    run_game(1680, 880, 240, TitleScene)
