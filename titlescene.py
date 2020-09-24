@@ -31,7 +31,7 @@ class TitleScene(SceneBase):
     
     def Render(self):
         # For the sake of brevity, the title scene is a blank red screen
-        mid, heigt, step = 650, 200, 80
+        mid, heigt, step = 650, 150, 80
         
         self.screen.fill(black)
 
