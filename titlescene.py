@@ -1,16 +1,9 @@
 from scenebase import SceneBase
 from gamescene import GameScene
+from tools import Color
 import pygame
 import pygame.freetype
 
-
-black = (0, 0, 0)
-yellow = (255, 255, 0)
-red = (255, 0, 0)
-blue = (0, 0, 255)
-white = (255, 255, 255)
-brown = (102, 64, 0)
-green = (0, 153, 0)
 
 class TitleScene(SceneBase):
     def __init__(self, screen):
@@ -32,16 +25,15 @@ class TitleScene(SceneBase):
         pass
     
     def Render(self):
-        # For the sake of brevity, the title scene is a blank red screen
         mid, height, step = 650, 150, 80
         
-        self.screen.fill(black)
+        self.screen.fill(Color.black)
 
-        self.text.render_to(self.screen, (mid - 200, height), "Willkommen Daheim Mr. O’Sullivan", white)  # eig ein Snooker Spieler, aber der einzige den ich kenne
-        self.text_small.render_to(self.screen, (mid, height + step * 2), "⬅  ➡    Zielen", white)
-        self.text_small.render_to(self.screen, (mid, height + step * 3), "⬆  ⬇    genaues Zielen", white)
-        self.text_small.render_to(self.screen, (mid, height + step * 4), "SPACE     Laden und Schießen", white)
-        self.text_small.render_to(self.screen, (mid, height + step * 6), "ENTER     8-Ball starten", white)
-        self.text_small.render_to(self.screen, (mid, height + step * 7), "BACKSPACE     9-Ball starten", white)
-        self.text_small.render_to(self.screen, (mid, height + step * 8), "ESC          Spiel beenden", white)
+        self.text.render_to(self.screen, (mid - 200, height), "Willkommen daheim Mr. O’Sullivan", Color.white)  # eig ein Snooker Spieler, aber der einzige den ich kenne
+        self.text_small.render_to(self.screen, (mid, height + step * 2), "⬅  ➡    Zielen", Color.white)
+        self.text_small.render_to(self.screen, (mid, height + step * 3), "⬆  ⬇    genaues Zielen", Color.white)
+        self.text_small.render_to(self.screen, (mid, height + step * 4), "SPACE     Laden und Schießen", Color.white)
+        self.text_small.render_to(self.screen, (mid, height + step * 6), "ENTER     8-Ball starten", Color.white)
+        self.text_small.render_to(self.screen, (mid, height + step * 7), "BACKSPACE     9-Ball starten", Color.white)
+        self.text_small.render_to(self.screen, (mid, height + step * 8), "ESC          Spiel beenden", Color.white)
     

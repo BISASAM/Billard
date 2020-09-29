@@ -4,6 +4,7 @@ import numpy as np
 import math
 
 
+# cant import tools.Color because of circular dependecies
 black = (0, 0, 0)
 yellow = (255, 255, 0)
 red = (255, 0, 0)
@@ -301,6 +302,7 @@ class Queue:
     def __init__(self, screen):
         self.screen = screen
 
+        #drawing polygon
         self.edges = [np.array((30, 31)), np.array((30, 39)), np.array((200, 36)), np.array((200, 34))]
         self.pivot = np.array([0, 35])
 
@@ -320,6 +322,7 @@ class Queue:
         if rot_speed != self.theda:
             self.update_rot_mat(rot_speed)
 
+        # translate to origin, rotate, translate back
         for ms in range(0, elapsed_time):  # for equal speed on diff. machines
             self.edges = self.edges - self.pivot
             new_edges = []

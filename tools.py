@@ -6,15 +6,6 @@ from os.path import join
 import numpy as np
 
 
-black = (0, 0, 0)
-yellow = (255, 255, 0)
-red = (255, 0, 0)
-blue = (0, 0, 255)
-white = (255, 255, 255)
-brown = (102, 64, 0)
-green = (0, 153, 0)
-
-
 class Tools:
 
     @staticmethod
@@ -78,12 +69,13 @@ class Tools:
         border_koord = [(0, 0, width, border_thickness), (0, height-border_thickness, width, border_thickness),
                         (0, 0, border_thickness, height),  (width-border_thickness, 0, border_thickness, height)]
 
-        # borders
+        screen.fill(Color.green)
         for koord in border_koord:
-            pygame.draw.rect(screen, brown, koord)
+            pygame.draw.rect(screen, Color.brown, koord)
 
     @staticmethod
     def jederMitJedem(liste):
+        #  TODO: use python collections module here
         result = []
         start = 0
         for entry in liste:
@@ -121,65 +113,29 @@ class Tools:
         #  helpful for development
         arrow = [(0, 0), (20, 0), (20, 10)]
         arrow = [(point[0]+pos[0], point[1]+pos[1]) for point in arrow]
-        pygame.draw.polygon(screen, red, arrow)
+        pygame.draw.polygon(screen, Color.red, arrow)
 
 
-        
+class Color:
+
+    black = (0, 0, 0)
+    yellow = (255, 255, 0)
+    red = (255, 0, 0)
+    blue = (0, 0, 255)
+    white = (255, 255, 255)
+    brown = (102, 64, 0)
+    green = (0, 153, 0)
+
 
 
 if __name__ == "__main__":
     import numpy as np
     import matplotlib.pyplot as plt
 
-    points = [[1380,  460],
-            [1381,  460],
-            [1382,  461],
-            [1383,  463],
-            [1383,  465],
-            [1382,  468],
-            [1380,  470],
-            [1377,  471],
-            [1374,  471],
-            [1370,  470],
-            [1366,  468],
-            [1363,  464],
-            [1360,  460],
-            [1360,  455],
-            [1360,  449],
-            [1363,  443],
-            [1367,  437],
-            [1373,  433],
-            [1380,  430],
-            [1388,  430],
-            [1396,  432],
-            [1404,  436],
-            [1411,  442],
-            [1417,  451],
-            [1420,  460],
-            [1420,  470],
-            [1417,  481],
-            [1411,  491],
-            [1403,  500],
-            [1392,  506],
-            [1380,  510],
-            [1367,  509],
-            [1354,  506],
-            [1342,  498],
-            [1331,  488],
-            [1324,  475],
-            [1320,  460],
-            [1321,  445],
-            [1326,  429],
-            [1335,  415],
-            [1347,  403],
-            [1363,  394],
-            [1380,  390],
-            [1398,  391],
-            [1416,  397],
-            [1433,  407],
-            [1446,  422],
-            [1455,  440],
-            [1460,  460]]
+    points = [[1380,  460], [1381,  460],[1382,  461],[1383,  463],[1383,  465],[1382,  468],[1380,  470],[1377,  471],[1374,  471],[1370,  470],[1366,  468],[1363,  464],
+            [1360,  460],[1360,  455],[1360,  449],[1363,  443],[1367,  437],[1373,  433],[1380,  430],[1388,  430],[1396,  432],[1404,  436],[1411,  442],[1417,  451],
+            [1420,  460],[1420,  470],[1417,  481],[1411,  491],[1403,  500],[1392,  506],[1380,  510],[1367,  509],[1354,  506],[1342,  498],[1331,  488],[1324,  475],
+            [1320,  460],[1321,  445],[1326,  429],[1335,  415],[1347,  403],[1363,  394],[1380,  390],[1398,  391],[1416,  397],[1433,  407],[1446,  422],[1455,  440],[1460,  460]]
     x = [p[0] for p in points]
     y = [p[1] for p in points]
 
